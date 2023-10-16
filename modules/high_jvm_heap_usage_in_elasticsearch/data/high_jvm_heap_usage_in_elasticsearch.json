@@ -1,0 +1,118 @@
+{
+  "name": "high_jvm_heap_usage_in_elasticsearch",
+  "description": "This incident type refers to situations where the percentage of the Java Virtual Machine (JVM) heap being used by Elasticsearch exceeds a certain threshold. The JVM heap is a portion of memory allocated to the JVM for running the Elasticsearch application, and if it becomes too full, it can cause the system to slow down or crash. This incident often requires investigation to identify the root cause of the high heap usage and may involve adjusting configuration settings or optimizing the Elasticsearch environment to prevent similar incidents from occurring in the future.",
+  "params": [
+    {
+      "name": "ELASTICSEARCH_LOG_FILE_PATH",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_CLUSTER_URL",
+      "value": ""
+    },
+    {
+      "name": "PATH_TO_ELASTIC_SEARCH_CONFIG_FILE",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_NODE_URL",
+      "value": ""
+    },
+    {
+      "name": "NEW_HEAP_SIZE",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## \"High JVM Heap Usage in Elasticsearch\"\nThis incident type refers to situations where the percentage of the Java Virtual Machine (JVM) heap being used by Elasticsearch exceeds a certain threshold. The JVM heap is a portion of memory allocated to the JVM for running the Elasticsearch application, and if it becomes too full, it can cause the system to slow down or crash. This incident often requires investigation to identify the root cause of the high heap usage and may involve adjusting configuration settings or optimizing the Elasticsearch environment to prevent similar incidents from occurring in the future."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch cluster health"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET ${ELASTICSEARCH_CLUSTER_URL}/_cluster/health`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch node stats"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET ${ELASTICSEARCH_NODE_URL}/_nodes/stats/jvm`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch JVM heap usage"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET ${ELASTICSEARCH_NODE_URL}/_nodes/stats/jvm?filter_path=nodes.*.jvm.mem.heap_used_percent`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch JVM heap size"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET ${ELASTICSEARCH_NODE_URL}/_nodes/stats/jvm?filter_path=nodes.*.jvm.mem.heap_max_in_bytes`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch logs for any error messages related to high JVM heap usage"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -n 1000 ${ELASTICSEARCH_LOG_FILE_PATH} | grep -i \"heap\"`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Increase the heap size of the JVM allocated to Elasticsearch. This can be done by updating the JVM options in Elasticsearch's configuration file."
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_update_elasticsearch_heap($PATH_TO_ELASTIC_SEARCH_CONFIG_FILE, $NEW_HEAP_SIZE)"
+    }
+  ]
+}
